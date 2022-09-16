@@ -1,0 +1,39 @@
+spec_version: "1.0"
+platform: "ocp"
+
+##
+## Mensageria
+##
+messaging:
+  provider: rabitmq # Obrigatorio: Indica qual provedor de mensageria sera usado.
+  name: broker-content # Opcional: Nome do servico a criar.
+  amqp_port: 5672 # Opcional: Porta AMQP
+  http_port: 15672 # Opcional: Porta HTTP
+  metrics_port: 15692 # Opcional: Porta para coleta de metricas
+  auth:
+  resources:
+    exchanges:
+      - name: events.business.Content
+        type: direct
+      - name: events.business.Content
+        vhost: "/"
+        type: direct
+    queues:
+      - name: events.business.BROKER-Content
+    bindings:
+      - source: events.business.Content
+        destination: events.business.BROKER.Content
+        destination_type: queue
+        routing_key: BROKER.Content.v1
+    policies:
+      - name: policy_content
+        pattern: events.business.BROKER.Content
+        apply_to: queues
+        definition:
+          dead-letter-exchange: events.business.Content.dlx
+          dead-letter-routing-key: Broker.Content.DLX.v1
+          ha-mode: "exactly"
+          ha-params: 2
+          ha-sync-mode: "manual"
+          message-ttl: 900000
+        priority: 1
